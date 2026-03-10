@@ -1,0 +1,29 @@
+[project]
+name = "getmocked"
+version = "0.1.0"
+description = "CLI tool to serve API mocks from YAML"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "typer",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "httpx",
+]
+
+[project.scripts]
+getmocked = "getmocked.cli:app"
+gmk = "getmocked.cli:app"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
