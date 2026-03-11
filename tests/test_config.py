@@ -180,8 +180,9 @@ routes:
         encoding="utf-8",
     )
 
-    with pytest.raises(ValueError, match="cannot have both 'body' and 'body_from'"):
-        load_config(str(config_file))
+    with pytest.raises(ValueError,
+    match="can only define one of 'body', 'body_from', or 'data_source'"
+    ,):load_config(str(config_file))
 
 
 def test_load_config_raises_if_request_query_is_not_an_object(tmp_path):
@@ -298,5 +299,327 @@ routes:
     with pytest.raises(
         ValueError,
         match="'response.delay_ms' in route #1 cannot be negative",
+    ):
+        load_config(str(config_file))
+
+def test_load_config_accepts_csv_data_source(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n2,Luigi\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+
+    assert "routes" in config
+
+
+def test_load_config_raises_if_data_source_is_combined_with_body(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      body:
+        ok: true
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="can only define one of 'body', 'body_from', or 'data_source'",
+    ):
+        load_config(str(config_file))
+
+
+def test_load_config_raises_if_data_source_mode_is_invalid(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: invalid
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.mode' in route #1 must be 'first' or 'all'",
+    ):
+        load_config(str(config_file))
+
+
+def test_load_config_raises_if_data_source_file_does_not_exist(tmp_path):
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(FileNotFoundError):
+        load_config(str(config_file))
+def test_load_config_accepts_data_source_wrap(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        wrap: items
+""",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+
+    assert "routes" in config
+
+
+def test_load_config_raises_if_data_source_wrap_is_not_string(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        wrap: 123
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="'response.data_source.wrap' in route #1 must be a string"):
+        load_config(str(config_file))
+
+
+def test_load_config_raises_if_not_found_status_is_not_integer(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        not_found_status: nope
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.not_found_status' in route #1 must be an integer",
+    ):
+        load_config(str(config_file))
+
+def test_load_config_accepts_data_source_coerce_types(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        coerce_types: true
+""",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+
+    assert "routes" in config
+
+
+def test_load_config_raises_if_data_source_coerce_types_is_not_boolean(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        coerce_types: nope
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.coerce_types' in route #1 must be a boolean",
+    ):
+        load_config(str(config_file))
+
+
+def test_load_config_accepts_data_source_schema(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name,active\n1,Mario,true\n", encoding="utf-8")
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        schema:
+          id: int
+          active: bool
+""",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+
+    assert "routes" in config
+
+
+def test_load_config_raises_if_data_source_schema_type_is_invalid(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        schema:
+          id: number
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.schema.id' in route #1 must be one of",
     ):
         load_config(str(config_file))

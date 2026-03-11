@@ -524,3 +524,367 @@ routes:
     assert response.status_code == 200
     assert response.json() == {"ok": True}
     assert elapsed >= 0.09
+
+def test_create_app_returns_single_record_from_csv_by_path_param(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name,email\n1,Mario,mario@example.com\n2,Luigi,luigi@example.com\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/2")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": "2",
+        "name": "Luigi",
+        "email": "luigi@example.com",
+    }
+
+
+def test_create_app_returns_404_when_csv_first_mode_finds_nothing(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/999")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Resource not found"}
+
+
+def test_create_app_returns_all_records_from_csv_by_query_param(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name,role\n1,Mario,admin\n2,Luigi,user\n3,Anna,user\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        where:
+          column: role
+          equals_query_param: role
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users?role=user")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {"id": "2", "name": "Luigi", "role": "user"},
+        {"id": "3", "name": "Anna", "role": "user"},
+    ]
+
+
+def test_create_app_returns_all_csv_rows_without_filter(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n2,Luigi\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users")
+
+    assert response.status_code == 200
+    assert response.json() == [
+        {"id": "1", "name": "Mario"},
+        {"id": "2", "name": "Luigi"},
+    ]
+
+def test_create_app_wraps_all_mode_csv_response(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n2,Luigi\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        wrap: items
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [
+            {"id": "1", "name": "Mario"},
+            {"id": "2", "name": "Luigi"},
+        ]
+    }
+
+
+def test_create_app_uses_custom_not_found_status_and_body_for_csv_first_mode(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name\n1,Mario\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        not_found_status: 422
+        not_found_body:
+          error: user_missing
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/999")
+
+    assert response.status_code == 422
+    assert response.json() == {"error": "user_missing"}
+
+def test_create_app_coerces_csv_types_automatically(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name,active,balance\n1,Mario,true,12.5\n2,Luigi,false,7\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        coerce_types: true
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/1")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "name": "Mario",
+        "active": True,
+        "balance": 12.5,
+    }
+
+
+def test_create_app_applies_schema_mapping_to_csv_rows(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,name,active,balance\n1,Mario,true,12.5\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        schema:
+          id: int
+          active: bool
+          balance: float
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/1")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 1,
+        "name": "Mario",
+        "active": True,
+        "balance": 12.5,
+    }
+
+
+def test_create_app_uses_schema_over_automatic_coercion(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    csv_file = data_dir / "users.csv"
+    csv_file.write_text(
+        "id,code\n1,001\n",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockydick.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        coerce_types: true
+        schema:
+          code: str
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/1")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": "1",
+        "code": "001",
+    }

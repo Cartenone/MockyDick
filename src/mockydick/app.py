@@ -1,10 +1,12 @@
 from collections import defaultdict
 import asyncio
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from mockydick.config import load_config, load_json_file
+from mockydick.datasources.csv_source import query_csv_data
 
 
 def render_template(value, path_params: dict):
@@ -32,7 +34,9 @@ def query_matches(expected_query: dict, actual_query: dict) -> bool:
 
 
 def headers_matches(expected_headers: dict, actual_headers: dict) -> bool:
-    normalized_actual_headers = {key.lower(): value for key, value in actual_headers.items()}
+    normalized_actual_headers = {
+        key.lower(): value for key, value in actual_headers.items()
+    }
 
     for key, expected_value in expected_headers.items():
         actual_value = normalized_actual_headers.get(key.lower())
@@ -98,15 +102,62 @@ async def route_matches(route: dict, request: Request) -> bool:
     return True
 
 
-def build_response_body(route: dict, config_path: str, path_params: dict):
+def build_data_source_response(
+    route: dict,
+    config_path: str,
+    path_params: dict[str, Any],
+    query_params: dict[str, Any],
+) -> tuple[bool, Any, int | None, Any]:
     response_config = route.get("response", {})
+    data_source = response_config["data_source"]
+
+    result = query_csv_data(
+        config_path=config_path,
+        relative_csv_path=data_source["file"],
+        mode=data_source["mode"],
+        where=data_source.get("where"),
+        path_params=path_params,
+        query_params=query_params,
+        schema=data_source.get("schema"),
+        coerce_types=data_source.get("coerce_types", False),
+    )
+
+    if data_source["mode"] == "first" and result is None:
+        not_found_status = data_source.get("not_found_status", 404)
+        not_found_body = data_source.get(
+            "not_found_body", {"detail": "Resource not found"}
+        )
+        return False, None, not_found_status, not_found_body
+
+    wrap = data_source.get("wrap")
+    if wrap is not None:
+        result = {wrap: result}
+
+    return True, result, None, None
+
+
+def build_response_body(
+    route: dict,
+    config_path: str,
+    path_params: dict[str, Any],
+    query_params: dict[str, Any],
+) -> tuple[bool, Any, int | None, Any]:
+    response_config = route.get("response", {})
+
+    if "data_source" in response_config:
+        return build_data_source_response(
+            route=route,
+            config_path=config_path,
+            path_params=path_params,
+            query_params=query_params,
+        )
 
     if "body_from" in response_config:
         body = load_json_file(config_path, response_config["body_from"])
     else:
         body = response_config.get("body", {})
 
-    return render_template(body, path_params)
+    return True, render_template(body, path_params), None, None
 
 
 def get_response_delay_ms(route: dict) -> int:
@@ -116,7 +167,7 @@ def get_response_delay_ms(route: dict) -> int:
 
 def create_app(config_path: str) -> FastAPI:
     config = load_config(config_path)
-    app = FastAPI(title="getMocked")
+    app = FastAPI(title="MockyDick")
 
     routes = config.get("routes", [])
     grouped_routes = defaultdict(list)
@@ -137,7 +188,20 @@ def create_app(config_path: str) -> FastAPI:
                 if await route_matches(route, request):
                     response_config = route.get("response", {})
                     status_code = response_config.get("status_code", 200)
-                    body = build_response_body(route, _config_path, request.path_params)
+
+                    found, body, not_found_status, not_found_body = build_response_body(
+                        route=route,
+                        config_path=_config_path,
+                        path_params=request.path_params,
+                        query_params=dict(request.query_params),
+                    )
+
+                    if not found:
+                        return JSONResponse(
+                            content=not_found_body,
+                            status_code=not_found_status,
+                        )
+
                     delay_ms = get_response_delay_ms(route)
 
                     if delay_ms > 0:
