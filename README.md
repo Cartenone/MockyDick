@@ -335,12 +335,22 @@ pytest
 
 Planned improvements:
 
-- better error messages
-- reusable datasets / data-driven mocks
-- HTTP client mode
-- capture real responses into mock files
+- better error messages and validation feedback
+- CSV/JSON-backed data-driven mocks
+- HTTP client / probe mode
+- capture real API responses into reusable mock files
 - more advanced matching rules
+- stateful mock scenarios
+- fault injection (delay, timeout, random failures)
 
+Future exploration:
+
+- OpenAPI-based mock generation
+- record & replay mode
+- GraphQL support
+- WebSocket mocking
+- gRPC support
+- SOAP/XML support
 ---
 
 ## Author
