@@ -1,6 +1,6 @@
 import pytest
 
-from getmocked.config import load_config, load_json_file
+from mockydick.config import load_config, load_json_file
 
 
 def test_load_config_reads_valid_yaml(tmp_path):
@@ -73,7 +73,7 @@ routes:
 
 
 def test_load_json_file_reads_json_relative_to_config(tmp_path):
-    config_file = tmp_path / "getmocked.yaml"
+    config_file = tmp_path / "mockydick.yaml"
     config_file.write_text("routes: []", encoding="utf-8")
 
     responses_dir = tmp_path / "responses"
@@ -101,7 +101,7 @@ def test_load_json_file_reads_json_relative_to_config(tmp_path):
 
 
 def test_load_json_file_raises_if_json_file_does_not_exist(tmp_path):
-    config_file = tmp_path / "getmocked.yaml"
+    config_file = tmp_path / "mockydick.yaml"
     config_file.write_text("routes: []", encoding="utf-8")
 
     with pytest.raises(FileNotFoundError):

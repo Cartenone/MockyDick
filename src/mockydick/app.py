@@ -4,7 +4,7 @@ import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from getmocked.config import load_config, load_json_file
+from mockydick.config import load_config, load_json_file
 
 
 def render_template(value, path_params: dict):

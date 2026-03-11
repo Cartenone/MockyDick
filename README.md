@@ -1,8 +1,8 @@
-![getMocked cover](./assets/cover.png)
+![mockydick cover](./assets/cover.png)
 
-# getMocked
+# MockyDick
 
-**getMocked** is a Python CLI tool for mocking HTTP APIs locally using YAML and JSON files.
+**MockyDick** is a Python CLI tool for mocking HTTP APIs locally using YAML and JSON files.
 
 It helps you simulate external services during local development without relying on hosted mock platforms or remote dashboards.
 
@@ -36,8 +36,8 @@ No external mock platforms, no unnecessary setup — just local files, a local s
 ### From source
 
 ```bash
-git clone <https://github.com/Cartenone/getMocked.git>
-cd getMocked
+git clone https://github.com/Cartenone/mockydick.git
+cd mockydick
 pip install .
 ```
 
@@ -54,17 +54,17 @@ pip install -e ".[dev]"
 ### Main command
 
 ```bash
-getmocked init
-getmocked validate getmocked.yaml
-getmocked serve getmocked.yaml --port 8000
+mockydick init
+mockydick validate mockydick.yaml
+mockydick serve mockydick.yaml --port 8000
 ```
 
 ### Short alias
 
 ```bash
-gmk init
-gmk validate getmocked.yaml
-gmk serve getmocked.yaml --port 8000
+mdk init
+mdk validate mockydick.yaml
+mdk serve mockydick.yaml --port 8000
 ```
 
 ---
@@ -74,19 +74,19 @@ gmk serve getmocked.yaml --port 8000
 Create a sample config:
 
 ```bash
-gmk init
+mdk init
 ```
 
 Validate it:
 
 ```bash
-gmk validate getmocked.yaml
+mdk validate mockydick.yaml
 ```
 
 Start the mock server:
 
 ```bash
-gmk serve getmocked.yaml --port 8000
+mdk serve mockydick.yaml --port 8000
 ```
 
 Then call it:
@@ -115,7 +115,7 @@ routes:
 
 ## Using external JSON files
 
-### `getmocked.yaml`
+### `mockydick.yaml`
 
 ```yaml
 routes:
@@ -173,7 +173,7 @@ Response:
 
 ## Request matching
 
-`getMocked` can return different responses for the same path depending on the request.
+`mockydick` can return different responses for the same path depending on the request.
 
 ### Match by query params
 
@@ -273,7 +273,7 @@ This is useful when you want to simulate:
 
 Imagine your application depends on an external service.
 
-Instead of calling the real service during local development, you can point your app to `http://127.0.0.1:8000` and let `getMocked` simulate the API.
+Instead of calling the real service during local development, you can point your app to `http://127.0.0.1:8000` and let `mockydick` simulate the API.
 
 That makes it easier to:
 
@@ -288,7 +288,7 @@ That makes it easier to:
 
 ```text
 mocks/
-├─ getmocked.yaml
+├─ mockydick.yaml
 └─ responses/
    └─ users.json
 ```
@@ -296,7 +296,7 @@ mocks/
 Then run:
 
 ```bash
-gmk serve ./mocks/getmocked.yaml --port 8000
+mdk serve ./mocks/mockydick.yaml --port 8000
 ```
 
 ---
@@ -306,7 +306,7 @@ gmk serve ./mocks/getmocked.yaml --port 8000
 Before starting the server, you can validate your configuration:
 
 ```bash
-gmk validate getmocked.yaml
+mdk validate mockydick.yaml
 ```
 
 This helps catch issues like:

@@ -2,7 +2,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-from getmocked.cli import app
+from mockydick.cli import app
 
 runner = CliRunner()
 
@@ -13,12 +13,12 @@ def test_init_creates_config_file():
 
         assert result.exit_code == 0
         assert "Sample file created" in result.stdout
-        assert Path("getmocked.yaml").exists()
+        assert Path("mockydick.yaml").exists()
 
 
 def test_init_fails_if_file_already_exists():
     with runner.isolated_filesystem():
-        Path("getmocked.yaml").write_text("already exists", encoding="utf-8")
+        Path("mockydick.yaml").write_text("already exists", encoding="utf-8")
 
         result = runner.invoke(app, ["init"])
 
@@ -28,7 +28,7 @@ def test_init_fails_if_file_already_exists():
 
 def test_validate_succeeds_for_valid_config():
     with runner.isolated_filesystem():
-        Path("getmocked.yaml").write_text(
+        Path("mockydick.yaml").write_text(
             """routes:
   - method: GET
     path: /health
@@ -40,7 +40,7 @@ def test_validate_succeeds_for_valid_config():
             encoding="utf-8",
         )
 
-        result = runner.invoke(app, ["validate", "getmocked.yaml"])
+        result = runner.invoke(app, ["validate", "mockydick.yaml"])
 
         assert result.exit_code == 0
         assert "Configuration is valid." in result.stdout

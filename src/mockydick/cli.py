@@ -3,8 +3,8 @@ from pathlib import Path
 import typer
 import uvicorn
 
-from getmocked.app import create_app
-from getmocked.config import load_config
+from mockydick.app import create_app
+from mockydick.config import load_config
 
 app = typer.Typer(help="Serve API mocks from YAML")
 
@@ -15,7 +15,7 @@ def main() -> None:
 
 
 @app.command("init")
-def init_command(output: str = "getmocked.yaml") -> None:
+def init_command(output: str = "mockydick.yaml") -> None:
     """
     Create a sample configuration file.
     """
