@@ -1,10 +1,11 @@
 ![mockydick cover](./assets/cover.png)
 
 # MockyDick
+
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**MockyDick** is a Python CLI tool for mocking HTTP APIs locally using YAML and JSON files.
+**MockyDick** is a Python CLI tool for mocking HTTP APIs locally using YAML, JSON, and CSV-backed datasets.
 
 It helps you simulate external services during local development without relying on hosted mock platforms or remote dashboards.
 
@@ -23,6 +24,12 @@ No external mock platforms, no unnecessary setup — just local files, a local s
 - serve mock HTTP endpoints locally
 - support inline JSON responses
 - support external JSON response files
+- support CSV-backed data-driven mocks
+- support response shaping for CSV data sources:
+  - `wrap`
+  - `not_found_status`
+  - `not_found_body`
+- support CSV type coercion and schema mapping
 - support path parameters
 - support request matching by:
   - query params
@@ -138,6 +145,136 @@ routes:
   ]
 }
 ```
+
+---
+
+## CSV-backed data-driven mocks
+
+MockyDick can build responses from local CSV files, making mocks more dynamic and reusable.
+
+### `mocks/mockydick.yaml`
+
+```yaml
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: all
+        wrap: items
+
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        not_found_status: 404
+        not_found_body:
+          error: user_not_found
+```
+
+### `mocks/data/users.csv`
+
+```csv
+id,name,active,balance
+1,Mario,true,12.5
+2,Luigi,false,7
+```
+
+### Example calls
+
+```bash
+curl http://127.0.0.1:8000/users
+curl http://127.0.0.1:8000/users/1
+curl http://127.0.0.1:8000/users/999
+```
+
+### Example response for `GET /users`
+
+```json
+{
+  "items": [
+    {
+      "id": "1",
+      "name": "Mario",
+      "active": "true",
+      "balance": "12.5"
+    },
+    {
+      "id": "2",
+      "name": "Luigi",
+      "active": "false",
+      "balance": "7"
+    }
+  ]
+}
+```
+
+### Type coercion
+
+You can automatically coerce CSV values into Python/JSON primitive types.
+
+```yaml
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        coerce_types: true
+```
+
+With `coerce_types: true`, values such as:
+
+- `true` → `true`
+- `false` → `false`
+- `12` → `12`
+- `12.5` → `12.5`
+
+are returned as properly typed JSON values.
+
+### Schema mapping
+
+For more control, you can define an explicit schema:
+
+```yaml
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: csv
+        file: ./data/users.csv
+        mode: first
+        where:
+          column: id
+          equals_path_param: user_id
+        schema:
+          id: int
+          active: bool
+          balance: float
+```
+
+Supported schema types:
+
+- `str`
+- `int`
+- `float`
+- `bool`
+
+When `schema` is present, it takes precedence over `coerce_types`.
 
 ---
 
@@ -291,6 +428,8 @@ That makes it easier to:
 ```text
 mocks/
 ├─ mockydick.yaml
+├─ data/
+│  └─ users.csv
 └─ responses/
    └─ users.json
 ```
@@ -316,8 +455,10 @@ This helps catch issues like:
 - missing `routes`
 - invalid route structure
 - missing JSON files
+- missing CSV files
 - invalid `delay_ms`
 - invalid request matching config
+- invalid CSV schema configuration
 
 ---
 
@@ -336,12 +477,12 @@ pytest
 Planned improvements:
 
 - better error messages and validation feedback
-- CSV/JSON-backed data-driven mocks
+- JSON-backed data-driven mocks
 - HTTP client / probe mode
 - capture real API responses into reusable mock files
 - more advanced matching rules
 - stateful mock scenarios
-- fault injection (delay, timeout, random failures)
+- extended fault injection beyond `delay_ms`
 
 Future exploration:
 
@@ -351,6 +492,7 @@ Future exploration:
 - WebSocket mocking
 - gRPC support
 - SOAP/XML support
+
 ---
 
 ## Author
