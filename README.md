@@ -1,6 +1,8 @@
 ![mockydick cover](./assets/cover.png)
 
 # MockyDick
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 **MockyDick** is a Python CLI tool for mocking HTTP APIs locally using YAML and JSON files.
 
