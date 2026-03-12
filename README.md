@@ -1,11 +1,11 @@
-![mockydick cover](./assets/cover.png)
+![mockyfast cover](./assets/cover.png)
 
-# MockyDick
+# MockyFast
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**MockyDick** is a Python CLI tool for mocking HTTP APIs locally using YAML, JSON, and CSV-backed datasets.
+**MockyFast** is a Python CLI tool for mocking HTTP APIs locally using YAML, JSON, and CSV-backed datasets.
 
 It helps you simulate external services during local development without relying on hosted mock platforms or remote dashboards.
 
@@ -45,8 +45,8 @@ No external mock platforms, no unnecessary setup — just local files, a local s
 ### From source
 
 ```bash
-git clone https://github.com/Cartenone/mockydick.git
-cd mockydick
+git clone https://github.com/Cartenone/mockyfast.git
+cd mockyfast
 pip install .
 ```
 
@@ -63,17 +63,17 @@ pip install -e ".[dev]"
 ### Main command
 
 ```bash
-mockydick init
-mockydick validate mockydick.yaml
-mockydick serve mockydick.yaml --port 8000
+mockyfast init
+mockyfast validate mockyfast.yaml
+mockyfast serve mockyfast.yaml --port 8000
 ```
 
 ### Short alias
 
 ```bash
-mdk init
-mdk validate mockydick.yaml
-mdk serve mockydick.yaml --port 8000
+mkf init
+mkf validate mockyfast.yaml
+mkf serve mockyfast.yaml --port 8000
 ```
 
 ---
@@ -83,19 +83,19 @@ mdk serve mockydick.yaml --port 8000
 Create a sample config:
 
 ```bash
-mdk init
+mkf init
 ```
 
 Validate it:
 
 ```bash
-mdk validate mockydick.yaml
+mkf validate mockyfast.yaml
 ```
 
 Start the mock server:
 
 ```bash
-mdk serve mockydick.yaml --port 8000
+mkf serve mockyfast.yaml --port 8000
 ```
 
 Then call it:
@@ -124,7 +124,7 @@ routes:
 
 ## Using external JSON files
 
-### `mockydick.yaml`
+### `mockyfast.yaml`
 
 ```yaml
 routes:
@@ -150,9 +150,9 @@ routes:
 
 ## CSV-backed data-driven mocks
 
-MockyDick can build responses from local CSV files, making mocks more dynamic and reusable.
+MockyFast can build responses from local CSV files, making mocks more dynamic and reusable.
 
-### `mocks/mockydick.yaml`
+### `mocks/mockyfast.yaml`
 
 ```yaml
 routes:
@@ -312,7 +312,7 @@ Response:
 
 ## Request matching
 
-`mockydick` can return different responses for the same path depending on the request.
+`mockyfast` can return different responses for the same path depending on the request.
 
 ### Match by query params
 
@@ -412,7 +412,7 @@ This is useful when you want to simulate:
 
 Imagine your application depends on an external service.
 
-Instead of calling the real service during local development, you can point your app to `http://127.0.0.1:8000` and let `mockydick` simulate the API.
+Instead of calling the real service during local development, you can point your app to `http://127.0.0.1:8000` and let `mockyfast` simulate the API.
 
 That makes it easier to:
 
@@ -427,7 +427,7 @@ That makes it easier to:
 
 ```text
 mocks/
-├─ mockydick.yaml
+├─ mockyfast.yaml
 ├─ data/
 │  └─ users.csv
 └─ responses/
@@ -437,7 +437,7 @@ mocks/
 Then run:
 
 ```bash
-mdk serve ./mocks/mockydick.yaml --port 8000
+mkf serve ./mocks/mockyfast.yaml --port 8000
 ```
 
 ---
@@ -447,7 +447,7 @@ mdk serve ./mocks/mockydick.yaml --port 8000
 Before starting the server, you can validate your configuration:
 
 ```bash
-mdk validate mockydick.yaml
+mkf validate mockyfast.yaml
 ```
 
 This helps catch issues like:

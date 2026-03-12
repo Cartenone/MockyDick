@@ -1,6 +1,6 @@
 import pytest
 
-from mockydick.config import load_config, load_json_file
+from mockyfast.config import load_config, load_json_file
 
 
 def test_load_config_reads_valid_yaml(tmp_path):
@@ -73,7 +73,7 @@ routes:
 
 
 def test_load_json_file_reads_json_relative_to_config(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text("routes: []", encoding="utf-8")
 
     responses_dir = tmp_path / "responses"
@@ -101,7 +101,7 @@ def test_load_json_file_reads_json_relative_to_config(tmp_path):
 
 
 def test_load_json_file_raises_if_json_file_does_not_exist(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text("routes: []", encoding="utf-8")
 
     with pytest.raises(FileNotFoundError):
@@ -312,7 +312,7 @@ def test_load_config_accepts_csv_data_source(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -426,7 +426,7 @@ def test_load_config_accepts_data_source_wrap(tmp_path):
     csv_file = data_dir / "users.csv"
     csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -513,7 +513,7 @@ def test_load_config_accepts_data_source_coerce_types(tmp_path):
     csv_file = data_dir / "users.csv"
     csv_file.write_text("id,name\n1,Mario\n", encoding="utf-8")
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -571,7 +571,7 @@ def test_load_config_accepts_data_source_schema(tmp_path):
     csv_file = data_dir / "users.csv"
     csv_file.write_text("id,name,active\n1,Mario,true\n", encoding="utf-8")
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:

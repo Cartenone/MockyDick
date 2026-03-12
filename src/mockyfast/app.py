@@ -5,8 +5,8 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from mockydick.config import load_config, load_json_file
-from mockydick.datasources.csv_source import query_csv_data
+from mockyfast.config import load_config, load_json_file
+from mockyfast.datasources.csv_source import query_csv_data
 
 
 def render_template(value, path_params: dict):
@@ -167,7 +167,7 @@ def get_response_delay_ms(route: dict) -> int:
 
 def create_app(config_path: str) -> FastAPI:
     config = load_config(config_path)
-    app = FastAPI(title="MockyDick")
+    app = FastAPI(title="MockyFast")
 
     routes = config.get("routes", [])
     grouped_routes = defaultdict(list)

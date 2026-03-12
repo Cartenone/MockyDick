@@ -1,10 +1,10 @@
 from fastapi.testclient import TestClient
 import time
-from mockydick.app import create_app
+from mockyfast.app import create_app
 
 
 def test_create_app_serves_configured_route(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -28,7 +28,7 @@ routes:
 
 
 def test_create_app_returns_custom_status_code(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -68,7 +68,7 @@ def test_create_app_loads_body_from_json_file(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -95,7 +95,7 @@ routes:
     }
 
 def test_create_app_supports_path_params_in_body(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -137,7 +137,7 @@ def test_create_app_supports_path_params_in_body_from_json(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -161,7 +161,7 @@ routes:
         "message": "User 42 loaded",
     }
 def test_create_app_matches_route_by_query_params(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -201,7 +201,7 @@ routes:
 
 
 def test_create_app_uses_fallback_route_when_query_does_not_match(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -237,7 +237,7 @@ routes:
 
 
 def test_create_app_returns_404_when_no_route_matches(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -265,7 +265,7 @@ routes:
     assert response.json() == {"detail": "No matching mock route found"}
 
 def test_create_app_matches_route_by_headers(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -299,7 +299,7 @@ routes:
 
 
 def test_create_app_uses_fallback_route_when_headers_do_not_match(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -333,7 +333,7 @@ routes:
 
 
 def test_create_app_matches_headers_case_insensitively(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -358,7 +358,7 @@ routes:
     assert response.status_code == 200
     assert response.json() == {"user": "mario"}
 def test_create_app_matches_route_by_json_body(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -399,7 +399,7 @@ routes:
 
 
 def test_create_app_uses_fallback_route_when_json_body_does_not_match(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -440,7 +440,7 @@ routes:
 
 
 def test_create_app_returns_404_when_json_is_required_but_request_has_no_json(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -467,7 +467,7 @@ routes:
 
 
 def test_create_app_json_match_is_partial_for_dicts(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -499,7 +499,7 @@ routes:
     assert response.json() == {"token": "fake-jwt-token"}
 
 def test_create_app_applies_response_delay(tmp_path):
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -535,7 +535,7 @@ def test_create_app_returns_single_record_from_csv_by_path_param(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -576,7 +576,7 @@ def test_create_app_returns_404_when_csv_first_mode_finds_nothing(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -613,7 +613,7 @@ def test_create_app_returns_all_records_from_csv_by_query_param(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -653,7 +653,7 @@ def test_create_app_returns_all_csv_rows_without_filter(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -689,7 +689,7 @@ def test_create_app_wraps_all_mode_csv_response(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -729,7 +729,7 @@ def test_create_app_uses_custom_not_found_status_and_body_for_csv_first_mode(tmp
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -768,7 +768,7 @@ def test_create_app_coerces_csv_types_automatically(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -811,7 +811,7 @@ def test_create_app_applies_schema_mapping_to_csv_rows(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:
@@ -857,7 +857,7 @@ def test_create_app_uses_schema_over_automatic_coercion(tmp_path):
         encoding="utf-8",
     )
 
-    config_file = tmp_path / "mockydick.yaml"
+    config_file = tmp_path / "mockyfast.yaml"
     config_file.write_text(
         """
 routes:

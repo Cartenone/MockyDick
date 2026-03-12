@@ -1,5 +1,5 @@
 [project]
-name = "mockydick"
+name = "mockyfast"
 version = "0.1.0"
 description = "CLI tool to serve API mocks from YAML"
 readme = "README.md"
@@ -18,8 +18,8 @@ dev = [
 ]
 
 [project.scripts]
-mockydick = "mockydick.cli:app"
-mdk = "mockydick.cli:app"
+mockyfast = "mockyfast.cli:app"
+mkf = "mockyfast.cli:app"
 
 [build-system]
 requires = ["setuptools>=61"]

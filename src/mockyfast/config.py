@@ -1,6 +1,6 @@
 from pathlib import Path
 import json
-from mockydick.datasources.csv_source import SUPPORTED_SCHEMA_TYPES
+from mockyfast.datasources.csv_source import SUPPORTED_SCHEMA_TYPES
 import yaml
 
 
