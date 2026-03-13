@@ -623,3 +623,102 @@ routes:
         match="'response.data_source.schema.id' in route #1 must be one of",
     ):
         load_config(str(config_file))
+
+def test_load_config_accepts_json_data_source(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        '[{"id": 1, "name": "Mario"}]',
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockyfast.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        where:
+          field: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    config = load_config(str(config_file))
+    assert "routes" in config
+
+
+def test_load_config_raises_if_json_data_source_where_field_is_missing(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        '[{"id": 1, "name": "Mario"}]',
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        where:
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.where.field' in route #1 is required",
+    ):
+        load_config(str(config_file))
+
+
+def test_load_config_raises_if_schema_is_used_with_json_data_source(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        '[{"id": 1, "name": "Mario"}]',
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "invalid.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: all
+        schema:
+          id: int
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="'response.data_source.schema' in route #1 is only supported for 'csv' data sources",
+    ):
+        load_config(str(config_file))

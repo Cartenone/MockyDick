@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 from mockyfast.datasources.csv_source import SUPPORTED_SCHEMA_TYPES
+from mockyfast.datasources.csv_source import SUPPORTED_SCHEMA_TYPES
 import yaml
 
 
@@ -107,9 +108,9 @@ def validate_data_source(data_source: dict, config_path: str, index: int) -> Non
         raise ValueError(f"'response.data_source' in route #{index} must be an object.")
 
     source_type = data_source.get("type")
-    if source_type != "csv":
+    if source_type not in {"csv", "json"}:
         raise ValueError(
-            f"'response.data_source.type' in route #{index} must be 'csv'."
+            f"'response.data_source.type' in route #{index} must be 'csv' or 'json'."
         )
 
     file_path = data_source.get("file")
@@ -118,7 +119,10 @@ def validate_data_source(data_source: dict, config_path: str, index: int) -> Non
             f"'response.data_source.file' in route #{index} must be a string."
         )
 
-    load_csv_file_reference(config_path, file_path)
+    if source_type == "csv":
+        load_csv_file_reference(config_path, file_path)
+    else:
+        load_json_file(config_path, file_path)
 
     mode = data_source.get("mode")
     if mode not in {"first", "all"}:
@@ -133,9 +137,10 @@ def validate_data_source(data_source: dict, config_path: str, index: int) -> Non
                 f"'response.data_source.where' in route #{index} must be an object."
             )
 
-        if "column" not in where:
+        key_name = "column" if source_type == "csv" else "field"
+        if key_name not in where:
             raise ValueError(
-                f"'response.data_source.where.column' in route #{index} is required."
+                f"'response.data_source.where.{key_name}' in route #{index} is required."
             )
 
         has_path_param = "equals_path_param" in where
@@ -181,6 +186,11 @@ def validate_data_source(data_source: dict, config_path: str, index: int) -> Non
 
     schema = data_source.get("schema")
     if schema is not None:
+        if source_type != "csv":
+            raise ValueError(
+                f"'response.data_source.schema' in route #{index} is only supported for 'csv' data sources."
+            )
+
         if not isinstance(schema, dict):
             raise ValueError(
                 f"'response.data_source.schema' in route #{index} must be an object."
@@ -198,6 +208,29 @@ def validate_data_source(data_source: dict, config_path: str, index: int) -> Non
                     f"'response.data_source.schema.{field_name}' in route #{index} "
                     f"must be one of: {allowed}."
                 )
+    mutable = data_source.get("mutable")
+    if mutable is not None and not isinstance(mutable, bool):
+        raise ValueError(
+            f"'response.data_source.mutable' in route #{index} must be a boolean."
+        )
+
+    key_field = data_source.get("key_field")
+    if key_field is not None and not isinstance(key_field, str):
+        raise ValueError(
+            f"'response.data_source.key_field' in route #{index} must be a string."
+        )
+
+    resource_name = data_source.get("resource_name")
+    if resource_name is not None and not isinstance(resource_name, str):
+        raise ValueError(
+            f"'response.data_source.resource_name' in route #{index} must be a string."
+        )
+
+    if mutable:
+        if not key_field:
+            raise ValueError(
+                f"'response.data_source.key_field' in route #{index} is required when mutable is true."
+            )
 
 def load_json_file(config_path: str, relative_json_path: str):
     base_path = Path(config_path).parent
@@ -216,4 +249,3 @@ def load_csv_file_reference(config_path: str, relative_csv_path: str) -> None:
 
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file not found: {relative_csv_path}")
-    

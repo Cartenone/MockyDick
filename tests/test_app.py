@@ -888,3 +888,252 @@ routes:
         "id": "1",
         "code": "001",
     }
+
+def test_create_app_returns_single_record_from_json_by_path_param(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        """
+[
+  { "id": 1, "name": "Mario", "role": "admin" },
+  { "id": 2, "name": "Luigi", "role": "user" }
+]
+""",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockyfast.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        where:
+          field: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/2")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "id": 2,
+        "name": "Luigi",
+        "role": "user",
+    }
+
+
+def test_create_app_returns_all_records_from_json_by_query_param(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        """
+[
+  { "id": 1, "name": "Mario", "role": "admin" },
+  { "id": 2, "name": "Luigi", "role": "user" },
+  { "id": 3, "name": "Anna", "role": "user" }
+]
+""",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockyfast.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: all
+        where:
+          field: role
+          equals_query_param: role
+        wrap: items
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users?role=user")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "items": [
+            {"id": 2, "name": "Luigi", "role": "user"},
+            {"id": 3, "name": "Anna", "role": "user"},
+        ]
+    }
+
+
+def test_create_app_returns_custom_not_found_for_json_data_source(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        """
+[
+  { "id": 1, "name": "Mario" }
+]
+""",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockyfast.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        where:
+          field: id
+          equals_path_param: user_id
+        not_found_status: 404
+        not_found_body:
+          error: user_not_found
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    response = client.get("/users/999")
+
+    assert response.status_code == 404
+    assert response.json() == {"error": "user_not_found"}
+
+def test_create_app_can_create_update_and_delete_mutable_json_resource(tmp_path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    json_file = data_dir / "users.json"
+    json_file.write_text(
+        """
+[
+  { "id": 1, "name": "Mario" }
+]
+""",
+        encoding="utf-8",
+    )
+
+    config_file = tmp_path / "mockyfast.yaml"
+    config_file.write_text(
+        """
+routes:
+  - method: GET
+    path: /users
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: all
+        mutable: true
+        key_field: id
+        resource_name: users
+        wrap: items
+
+  - method: GET
+    path: /users/{user_id}
+    response:
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        mutable: true
+        key_field: id
+        resource_name: users
+        where:
+          field: id
+          equals_path_param: user_id
+
+  - method: POST
+    path: /users
+    response:
+      status_code: 201
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: all
+        mutable: true
+        key_field: id
+        resource_name: users
+
+  - method: PUT
+    path: /users/{user_id}
+    response:
+      status_code: 200
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        mutable: true
+        key_field: id
+        resource_name: users
+        where:
+          field: id
+          equals_path_param: user_id
+
+  - method: DELETE
+    path: /users/{user_id}
+    response:
+      status_code: 200
+      data_source:
+        type: json
+        file: ./data/users.json
+        mode: first
+        mutable: true
+        key_field: id
+        resource_name: users
+        where:
+          field: id
+          equals_path_param: user_id
+""",
+        encoding="utf-8",
+    )
+
+    app = create_app(str(config_file))
+    client = TestClient(app)
+
+    create_response = client.post("/users", json={"id": 2, "name": "Luigi"})
+    assert create_response.status_code == 201
+    assert create_response.json() == {"id": 2, "name": "Luigi"}
+
+    get_response = client.get("/users/2")
+    assert get_response.status_code == 200
+    assert get_response.json() == {"id": 2, "name": "Luigi"}
+
+    update_response = client.put("/users/2", json={"name": "Luigi Updated"})
+    assert update_response.status_code == 200
+    assert update_response.json() == {"id": 2, "name": "Luigi Updated"}
+
+    delete_response = client.delete("/users/2")
+    assert delete_response.status_code == 200
+    assert delete_response.json() == {"deleted": True}
+
+    missing_response = client.get("/users/2")
+    assert missing_response.status_code == 404
